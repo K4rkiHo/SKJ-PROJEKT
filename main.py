@@ -10,11 +10,8 @@ screen = pygame.display.set_mode((W, H))
 pygame.display.set_caption("Zombie shooter")
 
 
-BG_image = pygame.image.load('BG.webp')
+BG_image = pygame.image.load('BG2.jpg')
 BG_image = pygame.transform.scale(BG_image,(W, H))
-
-
-
 
 move_left = False
 move_right = False
@@ -50,7 +47,7 @@ class player(pygame.sprite.Sprite):
         screen.blit(self.image, self.rect)
 
 pl = player(200, 200, 0.2, 1)
-pl2 = player(300, 350, 0.3, 1)
+pl2 = player(300, 350, 0.2, 1)
 
 run = True
 
@@ -67,6 +64,14 @@ i = 0
 
 while run:
 
+    screen.fill((0, 0, 0))
+    screen.blit(BG_image,(i, 0))
+    screen.blit(BG_image, (W+i, 0))
+    if (i == -W):
+        screen.blit(BG_image, (W + i, 0))
+        i = 0
+    i -= 1
+    
     pl2.draw()
     pl2.move(move_left, move_right)
     for event in pygame.event.get():
