@@ -1,4 +1,4 @@
-from sqlite3 import enable_shared_cache
+from numpy import true_divide
 from pygame.locals import *
 import pygame
 
@@ -22,9 +22,14 @@ BG_image = pygame.transform.scale(BG_image,(W, H))
 move_left = False
 move_right = False
 
+AI_move_L = False
+AI_move_R = False
+
 class player(pygame.sprite.Sprite):
     def __init__(self, x, y, scale, speed):
         pygame.sprite.Sprite.__init__(self)
+        self.x = x
+        self.y = y
         self.speed = speed
         self.direction = 1
         self.vel_y = 0
@@ -67,6 +72,7 @@ class player(pygame.sprite.Sprite):
         screen.blit(pygame.transform.flip(self.image, self.flip, False),self.rect)
 
 pl = player(100, 100, 0.2, 3)
+enemy = player(800, 100, 0.3, 0.5)
 
 def draw_line():
     pygame.draw.line(screen, RED, (0,400), (W, 400))
@@ -99,9 +105,19 @@ while run:
         screen.fill((0, 0, 0))
         screen.blit(BG_image,(i, 0))
         screen.blit(BG_image, (W+i, 0))
-    #draw_line()
+
+
+    draw_line()
     pl.draw()
     pl.move(move_left, move_right)
+
+    enemy.draw()
+    enemy.move(AI_move_L, AI_move_R)
+
+    AI_move_R = True
+
+
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
