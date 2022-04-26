@@ -1,6 +1,7 @@
 from pygame.locals import *
 import pygame
 import random
+import time
 
 pygame.init()
 
@@ -147,7 +148,7 @@ class player(pygame.sprite.Sprite):
                     self.move(ai_move_l, ai_move_r)
                     self.move_counter += 1
                     self.vision.center = (self.rect.centerx + 100 * self.direction, self.rect.centery)
-                    pygame.draw.rect(screen, RED, self.vision)
+                    #pygame.draw.rect(screen, RED, self.vision)
 
                     if self.move_counter > TILE_SIZE:
                         self.direction *= -1
@@ -240,6 +241,10 @@ enemy_group.add(enemy2)
 enemy_group.add(enemy3)
 enemy_group.add(enemy4)
 
+enemy_count = 0
+for enemy in enemy_group:
+    enemy_count += 1
+
 bullet_group = pygame.sprite.Group()
 item_box_group = pygame.sprite.Group()
 
@@ -255,32 +260,6 @@ while run:
     clock.tick(FPS)
 
     draw_BG()
-    """
-    if(move_left == True):
-            screen.fill((0, 0, 0))
-        screen.blit(BG_image,(i, 0))
-        screen.blit(BG_image, (W+i, 0))
-        if (i == +W):
-            screen.blit(BG_image, (W + i, 0))
-            i = 0
-        i += 1
-    else:
-        screen.fill((0, 0, 0))
-        screen.blit(BG_image,(i, 0))
-        screen.blit(BG_image, (W+i, 0))
-    if(move_right == True):
-        screen.fill((0, 0, 0))
-        screen.blit(BG_image,(i, 0))
-        screen.blit(BG_image, (W+i, 0))
-        if (i == -W):
-            screen.blit(BG_image, (W + i, 0))
-            i = 0
-        i -= 1
-    else:
-        screen.fill((0, 0, 0))
-        screen.blit(BG_image,(i, 0))
-        screen.blit(BG_image, (W+i, 0))
-    """
 
     #health
     health_bar.draw(pl.healt)
@@ -290,6 +269,11 @@ while run:
         screen.blit(bullet_img, (125 + (x * 10), 45))
     #score
     draw_text(f'SCORE: {pl.score}', font, WHITE, 450, 10)
+
+    draw_text(f'Zombies Left: {enemy_count}', font, WHITE, 450, 50)
+
+    if enemy_count == 0:
+        draw_text(f'YOU WIN!', font, RED, 450, 450)
 
 
     bullet_group.update()
@@ -308,6 +292,7 @@ while run:
             enemy.image.fill(TRANSPARETN)
             enemy.kill()
             pl.score += 50
+            enemy_count -= 1
             
 
     item_box_group.update()
