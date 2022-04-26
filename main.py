@@ -1,6 +1,6 @@
-from audioop import ratecv
 from pygame.locals import *
 import pygame
+import random
 
 pygame.init()
 
@@ -14,6 +14,7 @@ BLACK = (0,0,0)
 RED = (255,0,0)
 WHITE = (255,255,255)
 GREEN = (0, 255, 0)
+TRANSPARETN = (0,0,0,0)
 
 clock = pygame.time.Clock()
 
@@ -41,9 +42,6 @@ move_left = False
 move_right = False
 shoot = False
 
-AI_move_L = False
-AI_move_R = False
-
 font = pygame.font.SysFont('Futura', 30)
 
 def draw_text(text, font, text_color, x, y):
@@ -51,16 +49,16 @@ def draw_text(text, font, text_color, x, y):
     screen.blit(img, (x, y))
 
 class player(pygame.sprite.Sprite):
-    def __init__(self, x, y, scale, speed, ammo):
+    def __init__(self, char_type, x, y, scale, speed, ammo):
         pygame.sprite.Sprite.__init__(self)
-        self.x = x
-        self.y = y
+        self.char_type = char_type
         self.speed = speed
         self.direction = 1
         self.vel_y = 0
         self.flip = False
         self.jump = False
-        img = pygame.image.load('player.png')
+        self.alive = True
+        img = pygame.image.load(f'{self.char_type}.png')
         self.image = pygame.transform.scale(img,(img.get_width() * scale, img.get_height() * scale))
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -69,6 +67,10 @@ class player(pygame.sprite.Sprite):
         self.start_ammo = ammo
         self.healt = 100
         self.maxhealt = self.healt
+        #AI
+        self.move_counter = 0
+        self.idling = False
+        self.idle_counter = 0
 
     def update(self):
         self.chech_alive()
@@ -79,7 +81,6 @@ class player(pygame.sprite.Sprite):
     def move(self, move_left, move_right):
         dx = 0
         dy = 0
-
         if move_left:
             dx = -self.speed
             self.flip = True
@@ -110,6 +111,30 @@ class player(pygame.sprite.Sprite):
             bullet = Bullet(self.rect.centerx + (0.8 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
             bullet_group.add(bullet)
             self.ammo -= 1
+    
+    def AI(self):
+        if self.alive and pl.alive:
+            if random.randint(1, 100) == 1:
+                self.idling = True
+                self.idle_counter = 50
+
+            if self.idling == False:
+                if self.direction == 1:
+                    ai_move_r = True
+                else:
+                    ai_move_r = False
+                ai_move_l = not ai_move_r
+                self.move(ai_move_l, ai_move_r)
+                self.move_counter += 1
+
+                if self.move_counter > TILE_SIZE:
+                    self.direction *= -1
+                    self.move_counter *= -1
+            else:
+                self.idle_counter -= 1
+                if self.idle_counter <= 0:
+                    self.idling = False
+            
 
     def chech_alive(self):
         if self.healt <= 0:
@@ -120,7 +145,7 @@ class player(pygame.sprite.Sprite):
     def draw(self):
         screen.blit(pygame.transform.flip(self.image, self.flip, False),self.rect)
         #border
-        pygame.draw.rect(screen, RED, self.rect, 1)
+        #pygame.draw.rect(screen, RED, self.rect, 1)
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
@@ -138,12 +163,12 @@ class Bullet(pygame.sprite.Sprite):
             if pl.alive:
                 pl.healt -= 5
                 self.kill()
-            
-        if pygame.sprite.spritecollide(enemy, bullet_group, False): 
-            if enemy.alive:
-                enemy.healt -= 25
-                print(enemy.healt)
-                self.kill()
+        for enemy in enemy_group:
+            if pygame.sprite.spritecollide(enemy, bullet_group, False): 
+                if enemy.alive:
+                    enemy.healt -= 25
+                    print(enemy.healt)
+                    self.kill()
 
 class ItemBox(pygame.sprite.Sprite):
     def __init__(self, item_type, x, y):
@@ -179,10 +204,19 @@ class HealthBar():
 def draw_line():
     pygame.draw.line(screen, RED, (0,400), (W, 400))
 
-pl = player(100, 100, 0.2, 3, 20)
+pl = player('player', 100, 100, 0.2, 3, 20)
 health_bar = HealthBar(15, 15, pl.healt, pl.maxhealt)
 
-enemy = player(800, 100, 0.3, 0.5, 8)
+enemy1 = player('Zombie1', 800, 400, 0.05, 1, 8)
+enemy2 = player('Zombie2', 700, 400, 0.1, 1, 8)
+enemy3 = player('Zombie3', 900, 400, 0.05, 1, 8)
+enemy4 = player('Zombie4', 600, 400, 0.05, 1, 8)
+
+enemy_group = pygame.sprite.Group()
+enemy_group.add(enemy1)
+enemy_group.add(enemy2)
+enemy_group.add(enemy3)
+enemy_group.add(enemy4)
 
 bullet_group = pygame.sprite.Group()
 item_box_group = pygame.sprite.Group()
@@ -197,6 +231,7 @@ run = True
 i = 0
 while run:
     clock.tick(FPS)
+
 
     if(move_left == True):
         screen.fill((0, 0, 0))
@@ -223,6 +258,8 @@ while run:
         screen.blit(BG_image,(i, 0))
         screen.blit(BG_image, (W+i, 0))
 
+
+
     #health
     health_bar.draw(pl.healt)
     #ammo
@@ -238,18 +275,20 @@ while run:
     pl.update()
     pl.move(move_left, move_right)
 
-    enemy.draw()
-    enemy.update()
-    enemy.move(AI_move_L, AI_move_R)
+    for enemy in enemy_group:
+        enemy.AI()
+        enemy.update()
+        enemy.draw()
+        if enemy.alive == False:
+            enemy.image.fill(TRANSPARETN)
 
     item_box_group.update()
     item_box_group.draw(screen)
 
-    AI_move_L = True
-    enemy.shoot()
 
     if shoot:
         pl.shoot()
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
