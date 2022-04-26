@@ -258,8 +258,6 @@ while run:
         screen.blit(BG_image,(i, 0))
         screen.blit(BG_image, (W+i, 0))
 
-
-
     #health
     health_bar.draw(pl.healt)
     #ammo
