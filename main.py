@@ -44,6 +44,9 @@ shoot = False
 
 font = pygame.font.SysFont('Futura', 30)
 
+def draw_BG():
+    screen.blit(BG_image, (0, 0))
+
 def draw_text(text, font, text_color, x, y):
     img = font.render(text, True, text_color)
     screen.blit(img, (x, y))
@@ -67,10 +70,12 @@ class player(pygame.sprite.Sprite):
         self.start_ammo = ammo
         self.healt = 100
         self.maxhealt = self.healt
+        self.score = 0
         #AI
         self.move_counter = 0
         self.idling = False
         self.idle_counter = 0
+        self.vision = pygame.Rect(0,0,300,20)
 
     def update(self):
         self.chech_alive()
@@ -104,10 +109,14 @@ class player(pygame.sprite.Sprite):
         
         self.rect.x += dx
         self.rect.y += dy
+
+    def attack(self):
+        if pygame.sprite.spritecollide(pl, enemy_group, False):
+            pl.healt -= 1
     
     def shoot(self):
         if self.shoot_cooldown == 0 and self.ammo > 0:
-            self.shoot_cooldown = 20
+            self.shoot_cooldown = 10
             bullet = Bullet(self.rect.centerx + (0.8 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
             bullet_group.add(bullet)
             self.ammo -= 1
@@ -117,23 +126,36 @@ class player(pygame.sprite.Sprite):
             if random.randint(1, 100) == 1:
                 self.idling = True
                 self.idle_counter = 50
-
-            if self.idling == False:
+            if self.vision.colliderect(pl.rect):
                 if self.direction == 1:
-                    ai_move_r = True
-                else:
-                    ai_move_r = False
-                ai_move_l = not ai_move_r
-                self.move(ai_move_l, ai_move_r)
-                self.move_counter += 1
-
-                if self.move_counter > TILE_SIZE:
-                    self.direction *= -1
-                    self.move_counter *= -1
+                    self.move(False, True)
+                    if self.rect.centerx == 0 or self.rect.centerx == W:
+                        self.direction = -1
+                    self.attack()
+                if self.direction == -1:
+                    self.move(True, False)
+                    if self.rect.centerx == 0 or self.rect.centerx == W:
+                        self.direction = 1
+                    self.attack()
             else:
-                self.idle_counter -= 1
-                if self.idle_counter <= 0:
-                    self.idling = False
+                if self.idling == False:
+                    if self.direction == 1:
+                        ai_move_r = True
+                    else:
+                        ai_move_r = False
+                    ai_move_l = not ai_move_r
+                    self.move(ai_move_l, ai_move_r)
+                    self.move_counter += 1
+                    self.vision.center = (self.rect.centerx + 100 * self.direction, self.rect.centery)
+                    pygame.draw.rect(screen, RED, self.vision)
+
+                    if self.move_counter > TILE_SIZE:
+                        self.direction *= -1
+                        self.move_counter *= -1
+                else:
+                    self.idle_counter -= 1
+                    if self.idle_counter <= 0:
+                        self.idling = False
             
 
     def chech_alive(self):
@@ -150,7 +172,7 @@ class player(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         pygame.sprite.Sprite.__init__(self)
-        self.speed = 15
+        self.speed = 25
         self.image = bullet_img
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -166,7 +188,7 @@ class Bullet(pygame.sprite.Sprite):
         for enemy in enemy_group:
             if pygame.sprite.spritecollide(enemy, bullet_group, False): 
                 if enemy.alive:
-                    enemy.healt -= 25
+                    enemy.healt -= 20
                     print(enemy.healt)
                     self.kill()
 
@@ -204,13 +226,13 @@ class HealthBar():
 def draw_line():
     pygame.draw.line(screen, RED, (0,400), (W, 400))
 
-pl = player('player', 100, 100, 0.2, 3, 20)
+pl = player('player', 500, 100, 0.2, 3, 20)
 health_bar = HealthBar(15, 15, pl.healt, pl.maxhealt)
 
-enemy1 = player('Zombie1', 800, 400, 0.05, 1, 8)
-enemy2 = player('Zombie2', 700, 400, 0.1, 1, 8)
-enemy3 = player('Zombie3', 900, 400, 0.05, 1, 8)
-enemy4 = player('Zombie4', 600, 400, 0.05, 1, 8)
+enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
+enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
+enemy3 = player('Zombie3', 900, 400, 0.05, 2, 8)
+enemy4 = player('Zombie4', 100, 400, 0.05, 2, 8)
 
 enemy_group = pygame.sprite.Group()
 enemy_group.add(enemy1)
@@ -221,10 +243,10 @@ enemy_group.add(enemy4)
 bullet_group = pygame.sprite.Group()
 item_box_group = pygame.sprite.Group()
 
-item_box = ItemBox('Health', 330, 380)
+item_box = ItemBox('Health', 100, 380)
 item_box_group.add(item_box)
 
-item_box = ItemBox('Ammo', 500, 380)
+item_box = ItemBox('Ammo', 900, 380)
 item_box_group.add(item_box)
 
 run = True
@@ -232,9 +254,10 @@ i = 0
 while run:
     clock.tick(FPS)
 
-
+    draw_BG()
+    """
     if(move_left == True):
-        screen.fill((0, 0, 0))
+            screen.fill((0, 0, 0))
         screen.blit(BG_image,(i, 0))
         screen.blit(BG_image, (W+i, 0))
         if (i == +W):
@@ -257,6 +280,7 @@ while run:
         screen.fill((0, 0, 0))
         screen.blit(BG_image,(i, 0))
         screen.blit(BG_image, (W+i, 0))
+    """
 
     #health
     health_bar.draw(pl.healt)
@@ -264,6 +288,9 @@ while run:
     draw_text(f'AMMO: {pl.ammo}', font, WHITE, 10,50)
     for x in range(pl.ammo):
         screen.blit(bullet_img, (125 + (x * 10), 45))
+    #score
+    draw_text(f'SCORE: {pl.score}', font, WHITE, 450, 10)
+
 
     bullet_group.update()
     bullet_group.draw(screen)
@@ -279,14 +306,15 @@ while run:
         enemy.draw()
         if enemy.alive == False:
             enemy.image.fill(TRANSPARETN)
+            enemy.kill()
+            pl.score += 50
+            
 
     item_box_group.update()
     item_box_group.draw(screen)
 
-
     if shoot:
         pl.shoot()
-
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
