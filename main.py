@@ -9,11 +9,13 @@ FPS = 60
 W = 1000
 H = 500
 TILE_SIZE = 20
+start_game = False
 
 BLACK = (0,0,0)
 RED = (255,0,0)
 WHITE = (255,255,255)
 GREEN = (0, 255, 0)
+ORANGE = (255, 165, 0)
 TRANSPARETN = (0,0,0,0)
 
 clock = pygame.time.Clock()
@@ -23,6 +25,15 @@ pygame.display.set_caption("Zombie shooter")
 
 BG_image = pygame.image.load('BG2.jpg')
 BG_image = pygame.transform.scale(BG_image,(W, H))
+
+start_button_img = pygame.image.load('start.png').convert_alpha()
+start_button_img = pygame.transform.scale(start_button_img,(200, 100))
+
+exit_button_img = pygame.image.load('exit.png').convert_alpha()
+exit_button_img = pygame.transform.scale(exit_button_img,(200, 100))
+
+title_img = pygame.image.load('TITLE.png').convert_alpha()
+title_img = pygame.transform.scale(title_img,(300, 100))
 
 bullet_img = pygame.image.load('bullet_img.png')
 bullet_img = pygame.transform.scale(bullet_img,(20, 20))
@@ -131,11 +142,13 @@ class player(pygame.sprite.Sprite):
                     self.move(False, True)
                     if self.rect.centerx == 0 or self.rect.centerx == W:
                         self.direction = -1
+                        self.flip = True
                     self.attack()
                 if self.direction == -1:
                     self.move(True, False)
                     if self.rect.centerx == 0 or self.rect.centerx == W:
                         self.direction = 1
+                        self.flip = False
                     self.attack()
             else:
                 if self.idling == False:
@@ -157,7 +170,6 @@ class player(pygame.sprite.Sprite):
                     if self.idle_counter <= 0:
                         self.idling = False
             
-
     def chech_alive(self):
         if self.healt <= 0:
             self.healt = 0
@@ -223,8 +235,47 @@ class HealthBar():
         pygame.draw.rect(screen, RED, (self.x, self.y, 150, 20))
         pygame.draw.rect(screen, GREEN, (self.x, self.y, 150 * ratio, 20))
 
+class Playtform(pygame.sprite.Sprite):
+    def __init__(self, x, y, w, h):
+        pygame.sprite.Sprite.__init__(self)
+        self.rect = pygame.Rect(x, y, w, h)
+        self.x = x
+        self.y = y
+
+class Button():
+    def __init__(self, x, y, image, scale):
+        w = image.get_width()
+        h = image.get_height()
+        self.image = pygame.transform.scale(image, (int(w * scale), int(h * scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.cliced = False
+
+    def draw(self):
+        action = False
+        pos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and self.cliced == False:
+                self.cliced = True
+                action = True
+
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.cliced = False
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+        return action
+
 def draw_line():
     pygame.draw.line(screen, RED, (0,400), (W, 400))
+
+start_button = Button(W // 2 - 100, H // 2 - 50  , start_button_img, 1)
+
+exit_button = Button(W // 2 - 100, H // 2 - 50 + 150 , exit_button_img, 1)
+
+title = Button(W // 2 - 250, H // 2 - 50 - 150 , title_img, 2)
+
+platform_group = pygame.sprite.Group()
+p1 = Playtform(100, 200, 200, 40)
+platform_group.add(p1)
 
 pl = player('player', 500, 100, 0.2, 3, 20)
 health_bar = HealthBar(15, 15, pl.healt, pl.maxhealt)
@@ -258,47 +309,58 @@ i = 0
 while run:
     clock.tick(FPS)
 
-    draw_BG()
+    MENU_MOUSE_POS = pygame.mouse.get_pos()
+    if start_game == False:
+        screen.fill(ORANGE)
+        title.draw()
 
-    #health
-    health_bar.draw(pl.healt)
-    #ammo
-    draw_text(f'AMMO: {pl.ammo}', font, WHITE, 10,50)
-    for x in range(pl.ammo):
-        screen.blit(bullet_img, (125 + (x * 10), 45))
-    #score
-    draw_text(f'SCORE: {pl.score}', font, WHITE, 450, 10)
+        if start_button.draw():
+            pl.alive = True
+            start_game = True
+        if exit_button.draw():
+            run = False
 
-    draw_text(f'Zombies Left: {enemy_count}', font, WHITE, 450, 50)
+    else:
+        draw_BG()
+            #health
+        health_bar.draw(pl.healt)
+            #ammo
+        draw_text(f'AMMO: {pl.ammo}', font, WHITE, 10,50)
+        for x in range(pl.ammo):
+            screen.blit(bullet_img, (125 + (x * 10), 45))
+            #score
+        draw_text(f'SCORE: {pl.score}', font, WHITE, 450, 10)
 
-    if enemy_count == 0:
-        draw_text(f'YOU WIN!', font, RED, 450, 450)
+        draw_text(f'Zombies Left: {enemy_count}', font, WHITE, 450, 50)
 
+        if enemy_count == 0:
+            draw_text(f'YOU WIN!', font, RED, 450, 450)
 
-    bullet_group.update()
-    bullet_group.draw(screen)
+        bullet_group.update()
+        bullet_group.draw(screen)
 
-    draw_line()
-    pl.draw()
-    pl.update()
-    pl.move(move_left, move_right)
+        draw_line()
+        pl.draw()
+        pl.update()
+        pl.move(move_left, move_right)
 
-    for enemy in enemy_group:
-        enemy.AI()
-        enemy.update()
-        enemy.draw()
-        if enemy.alive == False:
-            enemy.image.fill(TRANSPARETN)
-            enemy.kill()
-            pl.score += 50
-            enemy_count -= 1
-            
+        for enemy in enemy_group:
+            enemy.AI()
+            enemy.update()
+            enemy.draw()
+            if enemy.alive == False:
+                enemy.image.fill(TRANSPARETN)
+                enemy.kill()
+                pl.score += 50
+                enemy_count -= 1
+                    
+        item_box_group.update()
+        item_box_group.draw(screen)
 
-    item_box_group.update()
-    item_box_group.draw(screen)
-
-    if shoot:
-        pl.shoot()
+        if shoot:
+            pl.shoot()
+        if pl.alive == False:
+            start_game = False
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
