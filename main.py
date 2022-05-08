@@ -39,9 +39,6 @@ exit_button_img = pygame.transform.scale(exit_button_img,(200, 100))
 gameove_img = pygame.image.load('gameover.jpg').convert_alpha()
 gameove_img = pygame.transform.scale(gameove_img,(200, 100))
 
-home_img = pygame.image.load('home.png').convert_alpha()
-home_img = pygame.transform.scale(home_img,(100, 100))
-
 title_img = pygame.image.load('TITLE.png').convert_alpha()
 title_img = pygame.transform.scale(title_img,(300, 100))
 
@@ -53,6 +50,18 @@ heal_box_img = pygame.transform.scale(heal_box_img,(50, 50))
 
 ammo_box_img = pygame.image.load('ammo_box.png')
 ammo_box_img = pygame.transform.scale(ammo_box_img,(50, 50))
+
+platform_img = pygame.image.load('platform.png')
+platform_img = pygame.transform.scale(platform_img,(300, 100))
+
+option_easy_img = pygame.image.load('easy.png').convert_alpha()
+option_easy_img = pygame.transform.scale(option_easy_img,(200, 200))
+
+option_normal_img = pygame.image.load('normal.png').convert_alpha()
+option_normal_img = pygame.transform.scale(option_normal_img,(200, 200))
+
+option_hard_img = pygame.image.load('hard.png').convert_alpha()
+option_hard_img = pygame.transform.scale(option_hard_img,(200, 200))
 
 item_boxes = {
     'Health'    : heal_box_img,
@@ -112,11 +121,11 @@ class player(pygame.sprite.Sprite):
         dy = 0
         if move_left:
             dx = -self.speed
-            self.flip = True
+            self.flip = False
             self.direction = -1
         if move_right:
             dx = self.speed
-            self.flip = False
+            self.flip = True
             self.direction = 1
         #jump
         if self.jump == True:
@@ -130,7 +139,20 @@ class player(pygame.sprite.Sprite):
 
         if self.rect.bottom + dy > 400:
             dy = 400 - self.rect.bottom
+
+        if self.rect.left + dx < 0:
+            dx = -self.rect.left
+        if self.rect.right + dx > W:
+            dx = W - self.rect.right
+
+        for x in platform_group:
+            if x.rect.colliderect(self.rect.x, self.rect.y + dy, 48, 76):
+                if self.rect.bottom < x.rect.centery:
+                    if self.vel_y > 0:
+                        self.rect.bottom = x.rect.top
+                        dy = 0
         
+
         self.rect.x += dx
         self.rect.y += dy
 
@@ -224,6 +246,7 @@ class ItemBox(pygame.sprite.Sprite):
         self.image = item_boxes[self.item_type]
         self.rect = self.image.get_rect()
         self.rect.midtop = (x + TILE_SIZE // 2, y + (TILE_SIZE - self.image.get_height()))
+
     def update(self):
         if pygame.sprite.collide_rect(self, pl):
             if self.item_type == 'Health':
@@ -248,12 +271,13 @@ class HealthBar():
         pygame.draw.rect(screen, RED, (self.x, self.y, 150, 20))
         pygame.draw.rect(screen, GREEN, (self.x, self.y, 150 * ratio, 20))
 
-class Playtform(pygame.sprite.Sprite):
-    def __init__(self, x, y, w, h):
+class Platform(pygame.sprite.Sprite):
+    def __init__(self, x, y, width):
         pygame.sprite.Sprite.__init__(self)
-        self.rect = pygame.Rect(x, y, w, h)
-        self.x = x
-        self.y = y
+        self.image = pygame.transform.scale(platform_img, (width, 10))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
 
 class Button():
     def __init__(self, x, y, image, scale):
@@ -280,12 +304,15 @@ class Button():
 def draw_line():
     pygame.draw.line(screen, RED, (0,400), (W, 400))
 
-start_button = Button(W // 2 - 100, H // 2 - 50  , start_button_img, 1)
+start_button = Button(W // 2 - 100, H // 2  , start_button_img, 1)
 exit_button = Button(W // 2 - 100, H // 2 - 50 + 150 , exit_button_img, 1)
 title = Button(W // 2 - 250, H // 2 - 50 - 150 , title_img, 2)
 
 title_end= Button(W // 2 - 200, H // 2 - 50 - 150 , gameove_img, 2)
-home_btn =Button(W // 2 - 50, H // 2 - 50  , home_img, 1)
+
+option_easy = Button(W // 2 - 400, H // 2 - 50 - 150 , option_easy_img, 1)
+option_medium = Button(W // 2 - 100, H // 2 - 50 - 150 , option_normal_img, 1)
+option_hard = Button(W // 2 + 200, H // 2 - 50 - 150 , option_hard_img, 1)
 
 pl = player('player', 500, 100, 0.2, 3, 20)
 health_bar = HealthBar(15, 15, pl.healt, pl.maxhealt)
@@ -294,12 +321,13 @@ enemy_group = pygame.sprite.Group()
 
 bullet_group = pygame.sprite.Group()
 item_box_group = pygame.sprite.Group()
+platform_group = pygame.sprite.Group()
 
-item_box = ItemBox('Health', 100, 380)
-item_box_group.add(item_box)
+platform1 = Platform(100, 200, 300)
+platform_group.add(platform1)
 
-item_box = ItemBox('Ammo', 900, 380)
-item_box_group.add(item_box)
+platform2 = Platform(600, 200, 300)
+platform_group.add(platform2)
 
 enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
 enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
@@ -313,24 +341,49 @@ enemy_group.add(enemy3)
 enemy_group.add(enemy4)
 
 def spawn_enemy():
-    enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
-    enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
-    enemy3 = player('Zombie3', 900, 400, 0.05, 2, 8)
-    enemy4 = player('Zombie4', 100, 400, 0.05, 2, 8)
+    if select_dificulty_easy:
+        enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
+        enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
 
-    enemy_group.add(enemy1)
-    enemy_group.add(enemy2)
-    enemy_group.add(enemy3)
-    enemy_group.add(enemy4)
-    run_once = 0
-    return run_once
+        enemy_group.add(enemy1)
+        enemy_group.add(enemy2)
+        run_once = 0
+        return run_once
+    if select_dificulty_medium:
+        enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
+        enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
+        enemy3 = player('Zombie3', 900, 400, 0.05, 2, 8)
+        enemy4 = player('Zombie4', 100, 400, 0.05, 2, 8)
+
+        enemy_group.add(enemy1)
+        enemy_group.add(enemy2)
+        enemy_group.add(enemy3)
+        enemy_group.add(enemy4)
+        run_once = 0
+        return run_once
+    if select_dificulty_hard:
+        enemy1 = player('Zombie1', 800, 400, 0.05, 3, 8)
+        enemy2 = player('Zombie2', 200, 400, 0.1, 3, 8)
+        enemy3 = player('Zombie3', 900, 400, 0.05, 3, 8)
+        enemy4 = player('Zombie4', 100, 400, 0.05, 3, 8)
+        enemy5 = player('Zombie1', 900, 400, 0.05, 3, 8)
+        enemy6 = player('Zombie3', 100, 400, 0.05, 3, 8)
+
+        enemy_group.add(enemy1)
+        enemy_group.add(enemy2)
+        enemy_group.add(enemy3)
+        enemy_group.add(enemy4)
+        enemy_group.add(enemy5)
+        enemy_group.add(enemy6)
+        run_once = 0
+        return run_once
 
 def spawn_heal():
-    item_box = ItemBox('Health', 100, 380)
+    item_box = ItemBox('Health', 220, 180)
     item_box_group.add(item_box)
 
 def spawn_ammo():
-    item_box = ItemBox('Ammo', 900, 380)
+    item_box = ItemBox('Ammo', 730, 180)
     item_box_group.add(item_box)
 
 enemy_count = 0
@@ -345,25 +398,40 @@ run_once2 = 0
 run_once3 = 0
 end_game = False
 
+game_idle = False
+
+select_dificulty_easy = False
+select_dificulty_medium = False
+select_dificulty_hard = False
+
 while run:
     clock.tick(FPS)
 
     MENU_MOUSE_POS = pygame.mouse.get_pos()
 
-    if start_game == False:
+    if game_idle == False:
         screen.fill(ORANGE)
         title.draw()
-
         if start_button.draw():
-            start_game = True
-            pl.alive = True
-            pl.healt = 100
-            pl.ammo = 20
-
+            game_idle = True
         if exit_button.draw():
             run = False
-    elif start_game == True:
-        draw_BG2()
+    if game_idle == True:
+        screen.fill(WHITE)
+        draw_text(f'MEDIUM', font, BLACK, W // 2 - 50, H // 2 + 100)
+        draw_text(f'EASY', font, BLACK, W // 2 - 325, H // 2 + 100)
+        draw_text(f'HARD', font, BLACK, W // 2 + 275, H // 2 + 100)
+        if option_easy.draw(): 
+            start_game = True
+            select_dificulty_easy = True
+        if option_medium.draw():
+            start_game = True
+            select_dificulty_medium = True
+        if option_hard.draw():
+            start_game = True
+            select_dificulty_hard = True
+    if start_game == True:
+        draw_BG()
             #health
         health_bar.draw(pl.healt)
             #ammo
@@ -382,6 +450,7 @@ while run:
         bullet_group.draw(screen)
 
         draw_line()
+        platform_group.draw(screen)
         pl.draw()
         pl.update()
         pl.move(move_left, move_right)
@@ -402,9 +471,14 @@ while run:
         if enemy_count == 0:
             if run_once == 0:
                 spawn_enemy()
-                enemy_count = 4
+                if select_dificulty_easy:
+                    enemy_count = 2
+                if select_dificulty_medium:
+                    enemy_count = 4
+                if select_dificulty_hard:
+                    enemy_count = 6
         
-        x = randint(1, 500)
+        x = randint(1, 300)
         a = 4
         if pl.ammo < 5 and a == x:
             run_once3 = 0
@@ -427,8 +501,7 @@ while run:
         if pl.alive == False:
             screen.fill(BLACK)
             title_end.draw()
-            if home_btn.draw():
-                start_game = False
+            draw_text(f'SCORE: {pl.score}', font, WHITE, W // 2 - 50, H // 2)
             if exit_button.draw():
                 run = False
 
