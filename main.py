@@ -26,6 +26,9 @@ pygame.display.set_caption("Zombie shooter")
 BG_image = pygame.image.load('BG2.jpg')
 BG_image = pygame.transform.scale(BG_image,(W, H))
 
+BG2_image = pygame.image.load('piva.png')
+BG2_image = pygame.transform.scale(BG2_image,(W, H))
+
 start_button_img = pygame.image.load('start.png').convert_alpha()
 start_button_img = pygame.transform.scale(start_button_img,(200, 100))
 
@@ -57,6 +60,9 @@ font = pygame.font.SysFont('Futura', 30)
 
 def draw_BG():
     screen.blit(BG_image, (0, 0))
+
+def draw_BG2():
+    screen.blit(BG2_image, (0, 0))
 
 def draw_text(text, font, text_color, x, y):
     img = font.render(text, True, text_color)
@@ -311,7 +317,8 @@ while run:
 
     MENU_MOUSE_POS = pygame.mouse.get_pos()
     if start_game == False:
-        screen.fill(ORANGE)
+        draw_BG2()
+        #screen.fill(BG2_image)
         title.draw()
 
         if start_button.draw():
@@ -321,7 +328,7 @@ while run:
             run = False
 
     else:
-        draw_BG()
+        draw_BG2()
             #health
         health_bar.draw(pl.healt)
             #ammo
