@@ -1,3 +1,4 @@
+from random import randint
 from pygame.locals import *
 import pygame
 import random
@@ -34,6 +35,12 @@ start_button_img = pygame.transform.scale(start_button_img,(200, 100))
 
 exit_button_img = pygame.image.load('exit.png').convert_alpha()
 exit_button_img = pygame.transform.scale(exit_button_img,(200, 100))
+
+gameove_img = pygame.image.load('gameover.jpg').convert_alpha()
+gameove_img = pygame.transform.scale(gameove_img,(200, 100))
+
+home_img = pygame.image.load('home.png').convert_alpha()
+home_img = pygame.transform.scale(home_img,(100, 100))
 
 title_img = pygame.image.load('TITLE.png').convert_alpha()
 title_img = pygame.transform.scale(title_img,(300, 100))
@@ -179,7 +186,7 @@ class player(pygame.sprite.Sprite):
     def chech_alive(self):
         if self.healt <= 0:
             self.healt = 0
-            self.speed = 0
+            #self.speed = 0
             self.alive = False
 
     def draw(self):
@@ -274,17 +281,25 @@ def draw_line():
     pygame.draw.line(screen, RED, (0,400), (W, 400))
 
 start_button = Button(W // 2 - 100, H // 2 - 50  , start_button_img, 1)
-
 exit_button = Button(W // 2 - 100, H // 2 - 50 + 150 , exit_button_img, 1)
-
 title = Button(W // 2 - 250, H // 2 - 50 - 150 , title_img, 2)
 
-platform_group = pygame.sprite.Group()
-p1 = Playtform(100, 200, 200, 40)
-platform_group.add(p1)
+title_end= Button(W // 2 - 200, H // 2 - 50 - 150 , gameove_img, 2)
+home_btn =Button(W // 2 - 50, H // 2 - 50  , home_img, 1)
 
 pl = player('player', 500, 100, 0.2, 3, 20)
 health_bar = HealthBar(15, 15, pl.healt, pl.maxhealt)
+
+enemy_group = pygame.sprite.Group()
+
+bullet_group = pygame.sprite.Group()
+item_box_group = pygame.sprite.Group()
+
+item_box = ItemBox('Health', 100, 380)
+item_box_group.add(item_box)
+
+item_box = ItemBox('Ammo', 900, 380)
+item_box_group.add(item_box)
 
 enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
 enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
@@ -297,37 +312,57 @@ enemy_group.add(enemy2)
 enemy_group.add(enemy3)
 enemy_group.add(enemy4)
 
+def spawn_enemy():
+    enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
+    enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
+    enemy3 = player('Zombie3', 900, 400, 0.05, 2, 8)
+    enemy4 = player('Zombie4', 100, 400, 0.05, 2, 8)
+
+    enemy_group.add(enemy1)
+    enemy_group.add(enemy2)
+    enemy_group.add(enemy3)
+    enemy_group.add(enemy4)
+    run_once = 0
+    return run_once
+
+def spawn_heal():
+    item_box = ItemBox('Health', 100, 380)
+    item_box_group.add(item_box)
+
+def spawn_ammo():
+    item_box = ItemBox('Ammo', 900, 380)
+    item_box_group.add(item_box)
+
 enemy_count = 0
 for enemy in enemy_group:
     enemy_count += 1
 
-bullet_group = pygame.sprite.Group()
-item_box_group = pygame.sprite.Group()
-
-item_box = ItemBox('Health', 100, 380)
-item_box_group.add(item_box)
-
-item_box = ItemBox('Ammo', 900, 380)
-item_box_group.add(item_box)
-
 run = True
 i = 0
+
+run_once = 0
+run_once2 = 0
+run_once3 = 0
+end_game = False
+
 while run:
     clock.tick(FPS)
 
     MENU_MOUSE_POS = pygame.mouse.get_pos()
+
     if start_game == False:
-        draw_BG2()
-        #screen.fill(BG2_image)
+        screen.fill(ORANGE)
         title.draw()
 
         if start_button.draw():
-            pl.alive = True
             start_game = True
+            pl.alive = True
+            pl.healt = 100
+            pl.ammo = 20
+
         if exit_button.draw():
             run = False
-
-    else:
+    elif start_game == True:
         draw_BG2()
             #health
         health_bar.draw(pl.healt)
@@ -360,14 +395,42 @@ while run:
                 enemy.kill()
                 pl.score += 50
                 enemy_count -= 1
-                    
+
+        if pl.healt == 20:
+            heal_count = 0
+
+        if enemy_count == 0:
+            if run_once == 0:
+                spawn_enemy()
+                enemy_count = 4
+        
+        x = randint(1, 500)
+        a = 4
+        if pl.ammo < 5 and a == x:
+            run_once3 = 0
+        if pl.healt < 20 and a == x:
+            run_once2 = 0
+
+        if run_once3 == 0:
+            spawn_ammo()
+            run_once3 = 1
+
+        if run_once2 == 0:
+            spawn_heal()
+            run_once2 = 1
+
         item_box_group.update()
         item_box_group.draw(screen)
 
         if shoot:
             pl.shoot()
         if pl.alive == False:
-            start_game = False
+            screen.fill(BLACK)
+            title_end.draw()
+            if home_btn.draw():
+                start_game = False
+            if exit_button.draw():
+                run = False
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -391,5 +454,6 @@ while run:
                 move_right = False
             if event.key == pygame.K_SPACE:
                 shoot = False
+
     pygame.display.update()
 pygame.quit()
