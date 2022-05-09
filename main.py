@@ -64,6 +64,9 @@ option_normal_img = pygame.transform.scale(option_normal_img,(200, 200))
 option_hard_img = pygame.image.load('hard.png').convert_alpha()
 option_hard_img = pygame.transform.scale(option_hard_img,(200, 200))
 
+option_hardcore_img = pygame.image.load('hardcore.png').convert_alpha()
+option_hardcore_img = pygame.transform.scale(option_hardcore_img,(200, 200))
+
 item_boxes = {
     'Health'    : heal_box_img,
     'Ammo'      : ammo_box_img
@@ -159,7 +162,10 @@ class player(pygame.sprite.Sprite):
 
     def attack(self):
         if pygame.sprite.spritecollide(pl, enemy_group, False):
-            pl.healt -= 1
+            if select_dificulty_hardcore:
+                pl.healt -= 5
+            else:
+                pl.healt -= 1
     
     def shoot(self):
         if self.shoot_cooldown == 0 and self.ammo > 0:
@@ -196,7 +202,6 @@ class player(pygame.sprite.Sprite):
                     self.move(ai_move_l, ai_move_r)
                     self.move_counter += 1
                     self.vision.center = (self.rect.centerx + 100 * self.direction, self.rect.centery)
-                    #pygame.draw.rect(screen, RED, self.vision)
 
                     if self.move_counter > TILE_SIZE:
                         self.direction *= -1
@@ -315,9 +320,10 @@ title = Button(W // 2 - 250, H // 2 - 50 - 150 , title_img, 2)
 
 title_end= Button(W // 2 - 200, H // 2 - 50 - 150 , gameove_img, 2)
 
-option_easy = Button(W // 2 - 400, H // 2 - 50 - 150 , option_easy_img, 1)
-option_medium = Button(W // 2 - 100, H // 2 - 50 - 150 , option_normal_img, 1)
-option_hard = Button(W // 2 + 200, H // 2 - 50 - 150 , option_hard_img, 1)
+option_easy = Button(W // 2 - 500, H // 2 - 50 - 150 , option_easy_img, 1)
+option_medium = Button(W // 2 - 250, H // 2 - 50 - 150 , option_normal_img, 1)
+option_hard = Button(W // 2 + 50, H // 2 - 50 - 150 , option_hard_img, 1)
+option_hardcore = Button(W // 2 + 300, H // 2 - 50 - 150 , option_hardcore_img, 1)
 
 pl = player('player', 500, 100, 0.2, 3, 20)
 health_bar = HealthBar(15, 15, pl.healt, pl.maxhealt)
@@ -334,6 +340,7 @@ platform_group.add(platform1)
 platform2 = Platform(600, 200, 300)
 platform_group.add(platform2)
 
+"""
 enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
 enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
 enemy3 = player('Zombie3', 900, 400, 0.05, 2, 8)
@@ -344,21 +351,27 @@ enemy_group.add(enemy1)
 enemy_group.add(enemy2)
 enemy_group.add(enemy3)
 enemy_group.add(enemy4)
+"""
+
 
 def spawn_enemy():
     if select_dificulty_easy:
-        enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
-        enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
+        x1 = randint(0,200)
+        x2 = randint(800,1000)
+        enemy1 = player('Zombie1', x2, 400, 0.05, 1, 8)
+        enemy2 = player('Zombie2', x1, 400, 0.1, 1, 8)
 
         enemy_group.add(enemy1)
         enemy_group.add(enemy2)
         run_once = 0
         return run_once
     if select_dificulty_medium:
-        enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
-        enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
-        enemy3 = player('Zombie3', 900, 400, 0.05, 2, 8)
-        enemy4 = player('Zombie4', 100, 400, 0.05, 2, 8)
+        x1 = randint(0,300)
+        x2 = randint(700,1000)
+        enemy1 = player('Zombie1', x2, 400, 0.05, 2, 8)
+        enemy2 = player('Zombie2', x1, 400, 0.1, 2, 8)
+        enemy3 = player('Zombie3', x2, 400, 0.05, 2, 8)
+        enemy4 = player('Zombie4', x1, 400, 0.05, 2, 8)
 
         enemy_group.add(enemy1)
         enemy_group.add(enemy2)
@@ -366,13 +379,20 @@ def spawn_enemy():
         enemy_group.add(enemy4)
         run_once = 0
         return run_once
+
     if select_dificulty_hard:
-        enemy1 = player('Zombie1', 800, 400, 0.05, 3, 8)
-        enemy2 = player('Zombie2', 200, 400, 0.1, 3, 8)
-        enemy3 = player('Zombie3', 900, 400, 0.05, 3, 8)
-        enemy4 = player('Zombie4', 100, 400, 0.05, 3, 8)
-        enemy5 = player('Zombie1', 900, 400, 0.05, 3, 8)
-        enemy6 = player('Zombie3', 100, 400, 0.05, 3, 8)
+        x1 = randint(0,400)
+        x2 = randint(0,400)
+        x3 = randint(0,400)
+        x4 = randint(600,1000)
+        x5 = randint(600,1000)
+        x6 = randint(600,1000)
+        enemy1 = player('Zombie1', x5, 400, 0.05, 3, 8)
+        enemy2 = player('Zombie2', x1, 400, 0.1, 3, 8)
+        enemy3 = player('Zombie3', x2, 400, 0.05, 3, 8)
+        enemy4 = player('Zombie4', x3, 400, 0.05, 3, 8)
+        enemy5 = player('Zombie1', x4, 400, 0.05, 3, 8)
+        enemy6 = player('Zombie3', x6, 400, 0.05, 3, 8)
 
         enemy_group.add(enemy1)
         enemy_group.add(enemy2)
@@ -382,6 +402,11 @@ def spawn_enemy():
         enemy_group.add(enemy6)
         run_once = 0
         return run_once
+    if select_dificulty_hardcore:
+        x = randint(0, 1000)
+        enemy1 = player('Zombie1', x, 400, 0.05 , 6, 8)
+        enemy1.healt = 1000
+        enemy_group.add(enemy1)
 
 def spawn_heal():
     item_box = ItemBox('Health', 220, 180)
@@ -408,6 +433,7 @@ game_idle = False
 select_dificulty_easy = False
 select_dificulty_medium = False
 select_dificulty_hard = False
+select_dificulty_hardcore = False
 
 while run:
     clock.tick(FPS)
@@ -424,18 +450,26 @@ while run:
             run = False
     if game_idle == True:
         screen.fill(WHITE)
-        draw_text(f'MEDIUM', font, BLACK, W // 2 - 50, H // 2 + 100)
-        draw_text(f'EASY', font, BLACK, W // 2 - 325, H // 2 + 100)
-        draw_text(f'HARD', font, BLACK, W // 2 + 275, H // 2 + 100)
+        draw_text(f'MEDIUM', font, BLACK, W // 2 - 200, H // 2 + 100)
+        draw_text(f'EASY', font, BLACK, W // 2 - 425, H // 2 + 100)
+        draw_text(f'HARD', font, BLACK, W // 2 + 125, H // 2 + 100)
+        draw_text(f'HARDCORE', font, BLACK, W // 2 + 350, H // 2 + 100)
         if option_easy.draw(): 
+            spawn_enemy()
             start_game = True
             select_dificulty_easy = True
         if option_medium.draw():
+            spawn_enemy()
             start_game = True
             select_dificulty_medium = True
         if option_hard.draw():
+            spawn_enemy()
             start_game = True
             select_dificulty_hard = True
+        if option_hardcore.draw():
+            spawn_enemy()
+            start_game = True
+            select_dificulty_hardcore = True
     if start_game == True:
         draw_BG()
             #health
@@ -449,13 +483,9 @@ while run:
 
         draw_text(f'Zombies Left: {enemy_count}', font, WHITE, 450, 50)
 
-        if enemy_count == 0:
-            draw_text(f'YOU WIN!', font, RED, 450, 450)
-
         bullet_group.update()
         bullet_group.draw(screen)
 
-        draw_line()
         platform_group.draw(screen)
         pl.draw()
         pl.update()
@@ -468,8 +498,13 @@ while run:
             if enemy.alive == False:
                 enemy.image.fill(TRANSPARETN)
                 enemy.kill()
-                pl.score += 50
+                if select_dificulty_hardcore:
+                    pl.score += 1250
+                else:
+                    pl.score += 50
                 enemy_count -= 1
+            if select_dificulty_hardcore:
+                draw_text(f'Hardcore Zombies healt: {enemy.healt}', font, RED, 700, 10)
 
         if pl.healt == 20:
             heal_count = 0
@@ -483,6 +518,8 @@ while run:
                     enemy_count = 4
                 if select_dificulty_hard:
                     enemy_count = 6
+                if select_dificulty_hardcore:
+                    enemy_count = 1
         
         x = randint(1, 300)
         a = 4
