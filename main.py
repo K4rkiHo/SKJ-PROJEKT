@@ -2,6 +2,7 @@ from random import randint
 from pygame.locals import *
 import pygame
 import random
+import json
 
 pygame.init()
 
@@ -304,6 +305,10 @@ class Button():
 def draw_line():
     pygame.draw.line(screen, RED, (0,400), (W, 400))
 
+def writeToJSONFile(data, filename):
+    with open(filename, "w") as f:
+        json.dump(data, f, indent=2)
+
 start_button = Button(W // 2 - 100, H // 2  , start_button_img, 1)
 exit_button = Button(W // 2 - 100, H // 2 - 50 + 150 , exit_button_img, 1)
 title = Button(W // 2 - 250, H // 2 - 50 - 150 , title_img, 2)
@@ -412,6 +417,7 @@ while run:
     if game_idle == False:
         screen.fill(ORANGE)
         title.draw()
+
         if start_button.draw():
             game_idle = True
         if exit_button.draw():
@@ -503,6 +509,17 @@ while run:
             title_end.draw()
             draw_text(f'SCORE: {pl.score}', font, WHITE, W // 2 - 50, H // 2)
             if exit_button.draw():
+
+                user_data = {
+                    "name" : "test",
+                    "score" : pl.score
+                }
+                with open('data.json') as json_file:
+                    data = json.load(json_file)
+                    temp = data["game_score"]
+                    temp.append(user_data)
+
+                writeToJSONFile(data, 'data.json')
                 run = False
 
     for event in pygame.event.get():
