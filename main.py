@@ -28,9 +28,6 @@ pygame.display.set_caption("Zombie shooter")
 BG_image = pygame.image.load('BG2.jpg')
 BG_image = pygame.transform.scale(BG_image,(W, H))
 
-BG2_image = pygame.image.load('piva.png')
-BG2_image = pygame.transform.scale(BG2_image,(W, H))
-
 start_button_img = pygame.image.load('start.png').convert_alpha()
 start_button_img = pygame.transform.scale(start_button_img,(200, 100))
 
@@ -81,9 +78,6 @@ font = pygame.font.SysFont('Futura', 30)
 def draw_BG():
     screen.blit(BG_image, (0, 0))
 
-def draw_BG2():
-    screen.blit(BG2_image, (0, 0))
-
 def draw_text(text, font, text_color, x, y):
     img = font.render(text, True, text_color)
     screen.blit(img, (x, y))
@@ -112,7 +106,7 @@ class player(pygame.sprite.Sprite):
         self.move_counter = 0
         self.idling = False
         self.idle_counter = 0
-        self.vision = pygame.Rect(0,0,300,20)
+        self.vision = pygame.Rect(0,0,700,40)
 
     def update(self):
         self.chech_alive()
@@ -176,9 +170,9 @@ class player(pygame.sprite.Sprite):
     
     def AI(self):
         if self.alive and pl.alive:
-            if random.randint(1, 100) == 1:
+            if random.randint(1, 20) == 1:
                 self.idling = True
-                self.idle_counter = 50
+                self.idle_counter = 20
             if self.vision.colliderect(pl.rect):
                 if self.direction == 1:
                     self.move(False, True)
@@ -201,7 +195,9 @@ class player(pygame.sprite.Sprite):
                     ai_move_l = not ai_move_r
                     self.move(ai_move_l, ai_move_r)
                     self.move_counter += 1
-                    self.vision.center = (self.rect.centerx + 100 * self.direction, self.rect.centery)
+                    self.vision.center = (self.rect.centerx + 300 * self.direction, self.rect.centery)
+                    #rect
+                    #pygame.draw.rect(screen, RED, self.vision)
 
                     if self.move_counter > TILE_SIZE:
                         self.direction *= -1
@@ -280,7 +276,7 @@ class HealthBar():
 class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y, width):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(platform_img, (width, 10))
+        self.image = pygame.transform.scale(platform_img, (width, 35))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -340,20 +336,6 @@ platform_group.add(platform1)
 platform2 = Platform(600, 200, 300)
 platform_group.add(platform2)
 
-"""
-enemy1 = player('Zombie1', 800, 400, 0.05, 2, 8)
-enemy2 = player('Zombie2', 200, 400, 0.1, 2, 8)
-enemy3 = player('Zombie3', 900, 400, 0.05, 2, 8)
-enemy4 = player('Zombie4', 100, 400, 0.05, 2, 8)
-
-enemy_group = pygame.sprite.Group()
-enemy_group.add(enemy1)
-enemy_group.add(enemy2)
-enemy_group.add(enemy3)
-enemy_group.add(enemy4)
-"""
-
-
 def spawn_enemy():
     if select_dificulty_easy:
         x1 = randint(0,200)
@@ -365,13 +347,16 @@ def spawn_enemy():
         enemy_group.add(enemy2)
         run_once = 0
         return run_once
+
     if select_dificulty_medium:
         x1 = randint(0,300)
         x2 = randint(700,1000)
+        x3 = randint(0,300)
+        x4 = randint(700,1000)
         enemy1 = player('Zombie1', x2, 400, 0.05, 2, 8)
         enemy2 = player('Zombie2', x1, 400, 0.1, 2, 8)
-        enemy3 = player('Zombie3', x2, 400, 0.05, 2, 8)
-        enemy4 = player('Zombie4', x1, 400, 0.05, 2, 8)
+        enemy3 = player('Zombie3', x3, 400, 0.05, 2, 8)
+        enemy4 = player('Zombie4', x4, 400, 0.05, 2, 8)
 
         enemy_group.add(enemy1)
         enemy_group.add(enemy2)
@@ -402,9 +387,10 @@ def spawn_enemy():
         enemy_group.add(enemy6)
         run_once = 0
         return run_once
+
     if select_dificulty_hardcore:
         x = randint(0, 1000)
-        enemy1 = player('Zombie1', x, 400, 0.05 , 6, 8)
+        enemy1 = player('Zombie1', x, 400, 0.06 , 6, 8)
         enemy1.healt = 1000
         enemy_group.add(enemy1)
 
@@ -441,7 +427,7 @@ while run:
     MENU_MOUSE_POS = pygame.mouse.get_pos()
 
     if game_idle == False:
-        screen.fill(ORANGE)
+        screen.fill(ORANGE) 
         title.draw()
 
         if start_button.draw():
@@ -548,7 +534,7 @@ while run:
             if exit_button.draw():
 
                 user_data = {
-                    "name" : "test",
+                    "name" : "player",
                     "score" : pl.score
                 }
                 with open('data.json') as json_file:
